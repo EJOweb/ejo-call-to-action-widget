@@ -6,7 +6,7 @@
 	Author: EJOweb
 	Author URI: http://www.ejoweb.nl/
 	
-	GitHub Plugin URI: https://github.com/EJOweb/ejo-call-to-action-widget.git
+	GitHub Plugin URI: https://github.com/EJOweb/ejo-call-to-action-widget
 	GitHub Branch:     master
  */
 
