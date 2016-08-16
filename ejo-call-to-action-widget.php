@@ -1,130 +1,76 @@
 <?php
-/*
-	Plugin Name: EJO Call To Action Widget
-	Description: A widget to a call to action
-	Version: 0.1
-	Author: EJOweb
-	Author URI: http://www.ejoweb.nl/
-	
-	GitHub Plugin URI: https://github.com/EJOweb/ejo-call-to-action-widget
-	GitHub Branch:     master
+/**
+ * Plugin Name: EJO Call To Action Widget
+ * Description: A widget to a call to action
+ * Version: 0.2
+ * Author: EJOweb
+ * Author URI: http://www.ejoweb.nl/
+ * 
+ * GitHub Plugin URI: https://github.com/EJOweb/ejo-call-to-action-widget
+ * GitHub Branch:     master
  */
 
-add_action( 'widgets_init', 'register_call_to_action_widget' );
-
-//* Register Widget
-function register_call_to_action_widget() 
-{ 
-    //* Include Widget Class
-    register_widget( 'Call_To_Action_Widget' ); 
-}
-
-final class Call_To_Action_Widget extends WP_Widget
+/**
+ *
+ */
+final class EJO_Call_To_Action_Widget_Plugin
 {
-	//* Constructor. Set the default widget options and create widget.
-	function __construct() 
-	{
-		$widget_title = 'Call To Action';
+	//* Slug of this plugin
+    const SLUG = 'ejo-call-to-action-widget';
 
-		$widget_info = array(
-			'classname'   => 'call-to-action-widget',
-			'description' => 'Korte informatie met een button',
-		);
+    //* Version number of this plugin
+    const VERSION = '0.2';
 
-		parent::__construct( 'call-to-action-widget', $widget_title, $widget_info );
-	}
+    //* Stores the directory path for this plugin.
+    public static $dir;
 
-	public function widget( $args, $instance ) 
-	{
-		$title = isset( $instance['title'] ) ? $instance['title'] : '';
-		$subtitle = isset( $instance['subtitle'] ) ? $instance['subtitle'] : '';
-		$text = isset( $instance['text'] ) ? $instance['text'] : '';
-		$link_text = isset( $instance['link-text'] ) ? $instance['link-text'] : '';
-		$linked_page = isset( $instance['linked-page'] ) ? $instance['linked-page'] : '';
+    //* Stores the directory URI for this plugin.
+    public static $uri;
 
-		echo $args['before_widget'];
-		?>
+    //* Holds the instance of this class.
+    protected static $_instance = null;
 
-		<div class="entry-content">
-			<h4><?php echo $subtitle; ?></h4>
-			<h2><?php echo $title; ?></h2>
-			<?php echo wpautop($text); ?>
-		</div>
-		<footer class="entry-footer">
-			<a href="<?php echo get_permalink($linked_page); ?>" class="button"><?php echo $link_text; ?></a>
-		</footer>
-		
-		<?php
-		echo $args['after_widget'];
-	}
+    //* Only instantiate once
+    public static function init() 
+    {
+        if ( !self::$_instance )
+            self::$_instance = new self;
+        return self::$_instance;
+    }
 
- 	public function form( $instance ) 
- 	{
-		$title = isset( $instance['title'] ) ? $instance['title'] : '';
-		$subtitle = isset( $instance['subtitle'] ) ? $instance['subtitle'] : '';
-		$text = isset( $instance['text'] ) ? $instance['text'] : '';
-		$link_text = isset( $instance['link-text'] ) ? $instance['link-text'] : '';
-		$linked_page = isset( $instance['linked-page'] ) ? $instance['linked-page'] : '';
+    //* No clones please!
+    protected function __clone() {}
 
-		?>
-		<p>
-			<label for="<?php echo $this->get_field_id('title'); ?>"><?php _e('Title:') ?></label>
-			<input type="text" class="widefat" id="<?php echo $this->get_field_id('title'); ?>" name="<?php echo $this->get_field_name('title'); ?>" value="<?php echo $title; ?>" />
-		</p>
+    //* Plugin setup.
+    protected function __construct() 
+    {
+		//* Setup
+        add_action( 'plugins_loaded', array( $this, 'setup' ), 1 );
 
-		<p>
-			<label for="<?php echo $this->get_field_id('subtitle'); ?>"><?php _e('Subtitle:') ?></label>
-			<input type="text" class="widefat" id="<?php echo $this->get_field_id('subtitle'); ?>" name="<?php echo $this->get_field_name('subtitle'); ?>" value="<?php echo $subtitle; ?>" />
-		</p>
+        // Include required files
+        include_once( self::$dir . 'includes/class-widget.php' );
 
-		<p>
-			<label for="<?php echo $this->get_field_id('text'); ?>"><?php _e('Tekst:') ?></label>
-			<textarea class="widefat" id="<?php echo $this->get_field_id('text'); ?>" name="<?php echo $this->get_field_name('text'); ?>"><?php echo $text; ?></textarea>
-		</p>
+        //* Register widget
+        add_action( 'widgets_init', array( $this, 'widgets_init' ) );
+    }
 
-		<p>
-			<label for="<?php echo $this->get_field_id('link-text'); ?>">Link tekst:</label>
-			<input type="text" class="widefat" id="<?php echo $this->get_field_id('link-text'); ?>" name="<?php echo $this->get_field_name('link-text'); ?>" value="<?php echo $link_text; ?>" />
-		</p>
-		<?php
+    //* Defines the directory path and URI for the plugin.
+    public function setup() 
+    {
+    	//* Set plugin dir and uri
+        self::$dir = plugin_dir_path( __FILE__ ); // with trailing slash
+        self::$uri = plugin_dir_url( __FILE__ ); // with trailing slash
 
-		//* Get all pages
-		$all_pages = get_pages();
+        //* Load the translation for the plugin
+        load_plugin_textdomain( self::SLUG, false, self::SLUG.'/languages' );
+    }
 
-		?>
-		<p>
-			<label for="<?php echo $this->get_field_id('linked-page'); ?>">Linken naar pagina:</label>
-			<select name="<?php echo $this->get_field_name('linked-page'); ?>" id="<?php echo $this->get_field_id('linked-page'); ?>" class="widefat">
-				<?php
-				//* Show all pages as an option
-				foreach ($all_pages as $page) {
-					printf( 
-						'<option value="%s" %s>%s</option>',
-						$page->ID,
-						selected($linked_page, $page->ID, false),
-						$page->post_title
-					);
-				} 
-				?>
-			</select>
-		</p>		
-		<?php
-	}
-
-	public function update( $new_instance, $old_instance ) 
-	{
-		//* Store old instance as defaults
-		$instance = $old_instance;
-
-		//* Store new title
-		$instance['title'] = strip_tags( $new_instance['title'] );
-
-		//* Store info
-		$instance['subtitle'] = isset( $new_instance['subtitle'] ) ? $new_instance['subtitle'] : '';
-		$instance['text'] = isset( $new_instance['text'] ) ? $new_instance['text'] : '';
-		$instance['link-text'] = isset( $new_instance['link-text'] ) ? $new_instance['link-text'] : '';
-		$instance['linked-page'] = isset( $new_instance['linked-page'] ) ? $new_instance['linked-page'] : '';
-		
-		return $instance;
+    //* Register widgets
+    public function widgets_init() 
+    {
+		register_widget( 'EJO_Call_To_Action_Widget' );
 	}
 }
+
+/* Call the wrapper class */
+EJO_Call_To_Action_Widget_Plugin::init();
